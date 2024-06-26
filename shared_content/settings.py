@@ -75,7 +75,9 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'shared_content.wsgi.application'
+WSGI_APPLICATION = 'shared_content.wsgi.app'
+
+
 
 
 # Database
