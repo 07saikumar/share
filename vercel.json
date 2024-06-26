@@ -2,11 +2,15 @@
   "version": 2,
   "builds": [
     {
-      "src": "manage.py",
+      "src": "shared_content/wsgi.py",
       "use": "@vercel/python",
+      "config": { "maxLambdaSize": "15mb", "runtime": "python3.9" }
+    },
+    {
+      "src": "build_files.sh",
+      "use": "@vercel/static-build",
       "config": {
-        "maxLambdaSize": "15mb",
-        "runtime": "python3.9"
+        "distDir": "staticfiles_build"
       }
     }
   ],
@@ -19,8 +23,5 @@
       "src": "/(.*)",
       "dest": "shared_content/wsgi.py"
     }
-  ],
-  "env": {
-    "DJANGO_SETTINGS_MODULE": "shared_content.settings"
-  }
+  ]
 }
