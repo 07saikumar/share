@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Share</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #dddddd;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+        }
+        h1 {
+            color: #444;
+            margin-left: 220px; /* Adjusted to make space for the nav */
+        }
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 120px;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 5px;
+            height: 100vh;
+        }
+        nav ul {
+            list-style: none;
+            padding: 0;
+        }
+        nav ul li {
+            margin-bottom: 10px;
+        }
+        nav ul li a {
+            text-decoration: none;
+            color: #444;
+            border: 1px solid #007BFF;
+            padding: 5px 10px;
+            border-radius: 5px;
+            display: block;
+            text-align: center;
+        }
+        nav ul li a:hover {
+            background: #007BFF;
+            color: white;
+        }
+        .content {
+            flex: 1;
+            padding: 20px;
+            margin-left: 220px; /* Adjusted to make space for the nav */
+        }
+        h1, h2 {
+            color: #444;
+        }
+        .container {
+            width: 70%;
+            max-width: 800px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+            position: fixed; /* Positioned absolutely */
+            right: 25px; /* Adjust as needed to fit your layout */
+        }
+        #messages-list {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+            overflow-y: auto;
+            max-height: calc(100vh - 240px);
+            margin-bottom: 10px;
+        }
+        #messages-list li {
+            background: #ababb429;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            max-width: 80%;
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+        #messages-list li img {
+            max-width: 100%;
+            border-radius: 5px;
+        }
+        #messages-list li pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+
+<body onload="fetchPublicMessages()">
+
+    <nav>
+        <ul>
+            <li><a href="{% url 'create_room' %}">Create Room</a></li>
+            <li><a href="{% url 'access_room' %}">Access Room</a></li>
+            <li><a href="{% url 'public_section' %}">Public Messages</a></li>
+        </ul>
+    </nav>
+
+
+    <div class="container">
+        <h1>Public Messages</h1>
+        <ul id="messages-list">
+            <!-- Messages will be populated dynamically -->
+        </ul>
+    </div>
+
+    <script>
+        // Function to fetch and display public messages
+        function fetchPublicMessages() {
+            fetch("{% url 'fetch_public_messages' %}")
+                .then(response => response.json())
+                .then(data => {
+                    const messagesList = document.getElementById('messages-list');
+
+                    // Clear existing messages to prevent duplication
+                    messagesList.innerHTML = '';
+
+                    // Iterate over fetched messages and add to the list
+                    data.messages.forEach(message => {
+                        const listItem = document.createElement('li');
+                        if (message.image) {
+                            const img = document.createElement('img');
+                            img.src = message.image;
+                            img.alt = 'Image';
+                            listItem.appendChild(img);
+                        }
+                        if (message.content) {
+                            const pre = document.createElement('pre');
+                            pre.innerHTML = message.content;
+                            listItem.appendChild(pre);
+                        }
+                        // Append new messages to the list
+                        messagesList.appendChild(listItem);
+                    });
+                })
+                .catch(error => console.error('Error fetching messages:', error));
+        }
+
+        // Fetch initial messages on page load
+        fetchPublicMessages();
+
+        // Fetch new messages periodically
+        setInterval(fetchPublicMessages, 500);
+    </script>
+</body>
+</html>

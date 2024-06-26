@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Public Messages</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #dddddd;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            position: relative;
+        }
+        h1, h2 {
+            color: #444;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+            position: fixed;
+        }
+        .footer {
+            display: flex;
+            width: 100%;
+            max-width: 800px;
+            background: #ffffffbd;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+        .footer form {
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            flex-wrap: nowrap;
+        }
+        .footer label {
+            margin-bottom: 5px;
+        }
+        .footer textarea {
+            flex: 2;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+        .footer input[type="file"] {
+            flex: 1;
+            margin-right: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .footer select {
+            flex: 0.5;
+            margin-right: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .footer button {
+            flex: 0.5;
+            padding: 10px;
+            background-color: #dddddd; 
+            color: #333;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+            letter-spacing: normal;
+            word-spacing: normal;
+            line-height: normal;
+            text-transform: none;
+            text-indent: 0px;
+            text-shadow: none;
+            display: inline-block;
+            text-align: center;
+        }
+        .footer button:hover {
+            background-color: #46474b;
+            color : #fff;
+        }
+        #messages-list {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+            overflow-y: auto;
+            max-height: calc(100vh - 240px);
+            margin-bottom: 10px;
+        }
+        #messages-list li {
+            background: #ababb429;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            max-width: 80%;
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+        #messages-list li img {
+            max-width: 100%;
+            border-radius: 5px;
+        }
+        #messages-list li pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body onload="fetchPublicMessages()">
+    <div class="container">
+        <h1>Public Messages</h1>
+        <ul id="messages-list">
+            <!-- Messages will be populated dynamically -->
+        </ul>
+    </div>
+    
+    <div class="footer">
+        <form id="message-form" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="file" name="image" accept="image/*" id="id_image">
+            <textarea name="content" cols="40" rows="2" id="id_content" spellcheck="false" placeholder="Type your message here..."></textarea>
+            <select name="expiry_time" id="id_expiry_time">
+                <option value="60">1 minute</option>
+                <option value="300">5 minutes</option>
+                <option value="600">10 minutes</option>
+                <option value="900">15 minutes</option>
+                <option value="1800">30 minutes</option>
+                <option value="2700">45 minutes</option>
+                <option value="3600">1 hour</option>
+                <option value="7200">2 hours</option>
+                <option value="86400">1 day</option>
+            </select>
+            <button type="submit">send</button>
+        </form>
+    </div>
+
+    <script>
+        let isUserScrolling = false;
+
+        // Function to fetch and display public messages
+        function fetchPublicMessages() {
+            fetch("{% url 'fetch_public_messages' %}")
+                .then(response => response.json())
+                .then(data => {
+                    const messagesList = document.getElementById('messages-list');
+                    const shouldScroll = !isUserScrolling && (messagesList.scrollTop + messagesList.clientHeight >= messagesList.scrollHeight - 50);
+
+                    // Clear existing messages to prevent duplication
+                    messagesList.innerHTML = '';
+
+                    // Iterate over fetched messages and add to the list
+                    data.messages.forEach(message => {
+                        const listItem = document.createElement('li');
+                        if (message.image) {
+                            const img = document.createElement('img');
+                            img.src = message.image;
+                            img.alt = 'Image';
+                            listItem.appendChild(img);
+                        }
+                        if (message.content) {
+                            const pre = document.createElement('pre');
+                            pre.innerHTML = message.content;
+                            listItem.appendChild(pre);
+                        }
+                        // Append new messages to the list
+                        messagesList.appendChild(listItem);
+                    });
+
+                    // Scroll to the bottom if the user is not scrolling
+                    if (shouldScroll) {
+                        messagesList.scrollTop = messagesList.scrollHeight;
+                    }
+                })
+                .catch(error => console.error('Error fetching messages:', error));
+        }
+
+        // Event listener to detect if the user is scrolling
+        document.getElementById('messages-list').addEventListener('scroll', function() {
+            const messagesList = document.getElementById('messages-list');
+            isUserScrolling = !(messagesList.scrollTop + messagesList.clientHeight >= messagesList.scrollHeight - 50);
+
+            // Reset the isUserScrolling flag after a short delay
+            setTimeout(() => {
+                isUserScrolling = false;
+            }, 1500);
+        });
+
+        // Submit form handler to post new messages
+        document.getElementById('message-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+
+            fetch(this.action, {
+                method: this.method,
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle response if needed
+                console.log('Message posted successfully:', data);
+                // Fetch new messages after posting
+                fetchPublicMessages();
+            })
+            .catch(error => {
+                console.error('Error posting message:', error);
+            });
+
+            // Clear the form after submission (if needed)
+            this.reset();
+        });
+
+        // Fetch initial messages on page load
+        fetchPublicMessages();
+
+        // Fetch new messages periodically
+        setInterval(fetchPublicMessages, 500);
+    </script>
+</body>
+</html>
